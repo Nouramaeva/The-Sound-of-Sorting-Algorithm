@@ -38,7 +38,7 @@ def scaleToNote(value, min_value, max_value, low=48, high=96):
     note_string = notes[note_index][0] + str(note_octave) + notes[note_index][1:]
 
     return note_string
-    pass
+
 
 
 def insertionSort(arr, player, _min, _max):
@@ -63,8 +63,9 @@ def insertionSort(arr, player, _min, _max):
 
 def main():
     _min = 1
-    _max = 100
-    listOfData = [random.randint(_min, _max) for i in range(5)]
+    _max = 100000
+    total = 1000
+    listOfData = [random.randint(_min, _max) for i in range(total)]
     player = musicalbeeps.Player(volume=0.8, mute_output=False)
 
     print(listOfData)
