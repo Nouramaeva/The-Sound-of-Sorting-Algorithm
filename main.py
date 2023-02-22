@@ -41,7 +41,7 @@ def scaleToNote(value, min_value, max_value, low=48, high=96):
 
 
 
-def insertionSort(arr, player, _min, _max):
+def insertion_sort(arr, player, _min, _max):
     for i in range(1, len(arr)):
         key = arr[i]
         player.play_note(scaleToNote(arr[i], _min, _max), 0.05)
@@ -60,19 +60,45 @@ def insertionSort(arr, player, _min, _max):
         arr[j + 1] = key
 
 
+def bubble_sort(a_list, player, _min, _max):
+    n = len(a_list)
+    for i in range(n-1):    # number of passes to guarantee the list is sorted
+        swapped = False
+        for j in range(n-1):   # running through the elements of the list
+            if a_list[j] > a_list[j+1]:
+                swapped = True
+                player.play_note(scaleToNote(a_list[j], _min, _max), 0.05)
+                a_list[j], a_list[j+1] = a_list[j+1], a_list[j]
+        player.play_note(scaleToNote(a_list[j], _min, _max), 0.05)
+        if not swapped:
+            break
 
-def main():
-    _min = 1
-    _max = 100000
-    total = 1000
+
+def testing_selection_sort():
+    _min = 0
+    _max = 1000
+    total = 100
     listOfData = [random.randint(_min, _max) for i in range(total)]
     player = musicalbeeps.Player(volume=0.8, mute_output=False)
 
     print(listOfData)
-    insertionSort(listOfData, player, _min, _max)
+    insertion_sort(listOfData, player, _min, _max)
     print(listOfData)
 
 
+def testing_bubble_sort():
+    _min = 1
+    _max = 1000
+    total = 100
+    listOfData = [random.randint(_min, _max) for i in range(total)]
+    player = musicalbeeps.Player(volume=0.8, mute_output=False)
+
+    print(listOfData)
+    bubble_sort(listOfData, player, _min, _max)
+    print(listOfData)
+
 
 if __name__ == "__main__":
-    main()
+    testing_selection_sort()
+    
+    #testing_bubble_sort()
