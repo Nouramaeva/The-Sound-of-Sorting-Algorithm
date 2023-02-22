@@ -1,0 +1,53 @@
+# Add reference to the location of the algorithm being used
+
+import musicalbeeps
+import random
+import copy
+
+notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+
+
+def scaleToNote(value, 0, max_value, C6, C8):
+    # Create a function that scales (converts) a position
+    # to a note in a range
+    # For example the number 18 in the range between 1 - 100
+    # what would be the corresponding note to play
+    # in the range between middle C and two octaves above C
+
+    # return the corresponding note in the range of notes
+    pass
+
+def insertionSort(arr, player, _min, _max):
+    for i in range(1, len(arr)):
+        key = arr[i]
+        X = scaleToNote(arr[i], _min, _max, )
+        player.play_note(X, 0.05)
+        player.play_note("B", 0.00005)
+
+        # Move elements of arr, that are
+        # greater than key, to one position ahead
+        # of their current position
+        j = i - 1
+        while j >= 0 and key < arr[j]:
+            player.play_note("D", 0.00005)
+            arr[j + 1] = arr[j]
+
+            j -= 1
+        arr[j + 1] = key
+
+
+
+def main():
+    _min = 1
+    _max = 100
+    listOfData = [random.randint(_min, _max) for i in range(5)]
+    player = musicalbeeps.Player(volume=0.8, mute_output=False)
+
+    print(listOfData)
+    insertionSort(listOfData, player)
+    print(listOfData)
+
+
+
+if __name__ == "__main__":
+    main()
