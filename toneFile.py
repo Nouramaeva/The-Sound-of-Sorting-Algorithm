@@ -1,0 +1,124 @@
+import math
+import os.path
+import struct
+
+
+class ToneFile:
+    """Generates .WAV files consisting of tones."""
+
+    def __init__(self, outputFile):
+
+        if not os.path.isdir(os.path.dirname(os.path.abspath(outputFile))):
+            raise ValueError(f"Destination directory '{os.path.dirname(os.path.abspath(outputFile))}' does not exist.")
+
+        # Store output wav path
+        self.wavPath = os.path.abspath(outputFile)
+
+        # initialize array to hold values to synthesize
+        self._objects = []
+
+    def addTone(self, divisor, length_ms=250):
+        """Add a tone to the output file.
+
+    The tone file is synthesized at 96000Hz. The divisor is a value indicating
+    the number of samples per cycle of the waveform.
+
+    To calculate the frequency in Hz of a divisor, use the formula:
+
+        96000 / (divisor * 2)"""
+
+        self._objects.append((divisor, int(math.floor(length_ms / 1000.0 * 96000))))
+
+    def addSilence(self, length_ms=250):
+        """Add a period of silence to the output file."""
+
+        self._objects.append((0, int(math.floor(length_ms / 1000.0 * 96000))))
+
+    def addToneByFrequency(self, freq, length_ms=250):
+        """Add a tone to the output file.
+
+    This function precalculates the nearest divisor to the requested
+    frequency. Note that the frequency will *not* be exact most of the
+    time."""
+
+        divisor = int(math.floor(48000 / freq))
+
+        self._objects.append((divisor, int(math.floor(length_ms / 1000.0 * 96000))))
+
+    def write(self):
+        """Write all accumulated tones to the .WAV file. You must call this function or no WAV file will be generated."""
+
+        # generate bytestring to hold output data, with
+        # initial wav header data prepared
+
+        # generate buffer for output samples
+        wav_samples = b''
+
+        lastCycle = 0  # 0 = neutral, 1 = >0, -1 = <0
+
+        for obj in self._objects:
+
+            # obj[0] = divisor or 0 for silence
+            # obj[1] = length in samples
+
+            # if silence, add empty samples
+            if obj[0] == 0:
+                wav_samples += b'\x00\x00' * obj[1]
+                lastCycle = 0
+                continue
+
+            # Determine number of cycles
+            # length_in_samples / (divisor * 2)
+            cycleCount = int(obj[1] / obj[0] * 2)
+
+            # add extra cycle - we just truncate it later, saves
+            # us from having to add samples to match the length
+            # manually.
+            cycleCount += 1
+
+            # Generate samples
+            samples = b''.join([
+                b'\x00\x20' * obj[0]
+                if y % 2 == (1 if lastCycle == 1 else 1)
+                else b'\x00\xe0' * obj[0]
+                for y in range(cycleCount * 2)
+            ])
+
+            # truncate to actual length
+            samples = samples[:obj[1] * 2]
+
+            # This inverts the waveform if the last waveform ended on a negative cycle.
+            # Not doing this would introduce noticeable clicks and frequency harmonics.
+            if samples[-1] == 0x20:
+                lastCycle = 1
+            else:
+                lastCycle = -1
+
+            # add generated samples to the buffer
+            wav_samples += samples
+
+        # samples finished...
+        # now we can start generating the bytes for the wav file
+
+        # this generates the structures for a .wav file
+        # for info on the wav file format, see:
+        # https://ccrma.stanford.edu/courses/422-winter-2014/projects/WaveFormat/\
+
+        # total size of standard PCM wav file = sample bytes + 44
+        total_file_size = struct.pack("<L", len(wav_samples) + 44)
+        wav_data = b"RIFF" + total_file_size + b"WAVE"  # riff header
+        wav_data += b"fmt \x10\x00\x00\x00"  # fmt chunk header
+        wav_data += b"\x01\x00\x01\x00\x00\x77\x01\x00\x00\xEE\x02\x00\x02\x00\x10\x00"  # fmt chunk data
+        total_sample_size = struct.pack("<L", len(wav_samples))
+        wav_data += b"data" + total_sample_size  # actual sample data
+
+        # Write the data to the wav file
+        of = open(os.path.abspath(self.wavPath), "wb")
+        of.write(wav_data)  # write headers
+        of.write(wav_samples)  # write raw samples
+        of.close()
+
+
+
+
+
